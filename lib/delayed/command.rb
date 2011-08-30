@@ -57,6 +57,8 @@ module Delayed
     def daemonize
       Delayed::Worker.backend.before_fork
 
+      Mongoid.configure.master.connection.close if defined?(Mongoid)
+
       ObjectSpace.each_object(File) do |file|
         @files_to_reopen << file unless file.closed?
       end
@@ -98,6 +100,8 @@ module Delayed
       
       Delayed::Worker.logger = Logger.new(File.join(Rails.root, 'log', 'delayed_job.log'))
       Delayed::Worker.backend.after_fork
+
+      Mongoid.configure.master.connection.connect if defined? (Mongoid)
       
       worker = Delayed::Worker.new(@options)
       worker.name_prefix = "#{worker_name} "
